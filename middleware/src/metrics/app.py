@@ -18,12 +18,21 @@ siga caliente) y se renueva 30s antes de expirar.
 Esquema real de columnas en `calls_log`:
   call_id, mc_number, carrier_name, load_id, origin_city, origin_state,
   destination_city, destination_state, outcome, agreed_price,
-  carrier_sentiment, negotiation_rounds, logged_at, carrier_phone
+  carrier_sentiment, negotiation_rounds, logged_at, carrier_phone,
+  loadboard_rate
 
-Nota: este esquema no incluye loadboard_rate ni duration_minutes, así
-que las métricas que dependerían de esos dos campos (total_savings,
-avg_discount_pct, cost_over_time, savings_over_time, total_minutes)
-se devuelven en 0 / vacío - no hay dato fuente para ellas.
+IMPORTANTE sobre loadboard_rate vs max_rate: loadboard_rate es el rate
+PÚBLICO que ya se le muestra al carrier en cada load (lo que devuelve
+RATE en search_loads) - es seguro tenerlo en este pipeline porque el
+agente ya lo conoce y lo dice en voz alta de forma rutinaria. max_rate
+(el techo interno real) NUNCA debe entrar en este pipeline ni en
+ningún dato que pase por el contexto del agente - ver el build
+description doc, sección 4, para la razón completa. Las métricas de
+"savings" de aquí miden el rendimiento de negociación contra el precio
+público, no contra el margen interno real - es una limitación
+consciente, no un descuido.
+
+total_minutes sigue en 0 - no hay duration_minutes en este esquema.
 """
 import json
 import os
@@ -31,7 +40,7 @@ import time
 import urllib.error
 import urllib.request
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from common.http import response, error_response
 
@@ -96,6 +105,15 @@ def _date_key(ts):
     return str(ts)[:10]
 
 
+def _to_float(value):
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def _compute_metrics(logs):
     total = len(logs)
     if total == 0:
@@ -110,6 +128,16 @@ def _compute_metrics(logs):
     date_counts = defaultdict(int)
     date_outcome_counts = defaultdict(lambda: defaultdict(int))
     recent_bookings = []
+
+    negotiation_details = []
+    discounts = []
+    cost_by_date = defaultdict(float)
+    savings_by_date = defaultdict(float)
+    total_savings = 0.0
+    cost_wtd = 0.0
+
+    today = datetime.utcnow().date()
+    week_start_str = (today - timedelta(days=today.weekday())).isoformat()
 
     funnel_authorized = 0
     funnel_matched = 0
@@ -134,6 +162,8 @@ def _compute_metrics(logs):
         if lane:
             lane_counts[lane] += 1
 
+        date_key = _date_key(log.get("logged_at"))
+
         if outcome == "booked":
             if lane:
                 booked_route_counts[(origin, destination)] += 1
@@ -147,11 +177,30 @@ def _compute_metrics(logs):
                 "negotiation_rounds": log.get("negotiation_rounds") or 0,
             })
 
+            agreed = _to_float(log.get("agreed_price"))
+            loadboard = _to_float(log.get("loadboard_rate"))
+
+            if agreed is not None:
+                cost_by_date[date_key] += agreed
+                if date_key >= week_start_str:
+                    cost_wtd += agreed
+
+            if agreed is not None and loadboard is not None and loadboard > 0:
+                negotiation_details.append({
+                    "loadboard_rate": round(loadboard, 2),
+                    "agreed_price": round(agreed, 2),
+                })
+                discount = (1 - agreed / loadboard) * 100
+                discounts.append(discount)
+                if loadboard > agreed:
+                    saving = loadboard - agreed
+                    total_savings += saving
+                    savings_by_date[date_key] += saving
+
         rounds = log.get("negotiation_rounds") or 0
         if rounds:
             neg_rounds.append(rounds)
 
-        date_key = _date_key(log.get("logged_at"))
         date_counts[date_key] += 1
         date_outcome_counts[date_key][outcome] += 1
 
@@ -183,25 +232,35 @@ def _compute_metrics(logs):
 
     recent_bookings.sort(key=lambda x: x["timestamp"], reverse=True)
 
+    cost_over_time_list = [
+        {"date": d, "cost": round(c, 2)} for d, c in sorted(cost_by_date.items())
+    ]
+
+    cumulative = 0.0
+    savings_over_time_list = []
+    for d in sorted(savings_by_date.keys()):
+        cumulative += savings_by_date[d]
+        savings_over_time_list.append({"date": d, "savings": round(cumulative, 2)})
+
     return {
         "total_calls": total,
         "total_bookings": booked,
         "total_minutes": 0.0,
-        "total_savings": 0.0,
-        "cost_wtd": 0.0,
+        "total_savings": round(total_savings, 2),
+        "cost_wtd": round(cost_wtd, 2),
         "calls_by_outcome": dict(outcome_counts),
         "booking_rate": round(booking_rate, 1),
         "avg_negotiation_rounds": round(sum(neg_rounds) / len(neg_rounds), 1) if neg_rounds else 0.0,
-        "avg_discount_pct": 0.0,
+        "avg_discount_pct": round(sum(discounts) / len(discounts), 1) if discounts else 0.0,
         "sentiment_distribution": dict(sentiment_counts),
         "sentiment_by_outcome": {k: dict(v) for k, v in sentiment_by_outcome.items()},
         "call_funnel": call_funnel,
-        "negotiation_details": [],
+        "negotiation_details": negotiation_details,
         "top_lanes": top_lanes_list,
         "loads_utilization": {"total_loads": 0, "booked": booked},
         "call_volume_over_time": call_volume_list,
-        "savings_over_time": [],
-        "cost_over_time": [],
+        "savings_over_time": savings_over_time_list,
+        "cost_over_time": cost_over_time_list,
         "booked_routes": booked_routes_list,
         "recent_bookings": recent_bookings[:20],
     }

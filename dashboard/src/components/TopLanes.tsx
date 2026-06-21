@@ -25,14 +25,21 @@ export function TopLanes({ data }: { data: Array<{ lane: string; count: number }
             margin={{ top: 0, right: 10, left: 0, bottom: 0 }}
           >
             <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-            <XAxis type="number" axisLine={false} tickLine={false} />
+            <XAxis
+              type="number"
+              axisLine={false}
+              tickLine={false}
+              allowDecimals={false}
+              tickFormatter={(v) => Math.round(v).toString()}
+            />
             <YAxis
               type="category"
               dataKey="short"
-              width={140}
+              width={200}
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 12, fontFamily: 'Outfit' }}
+              interval={0}
             />
             <Tooltip
               content={
