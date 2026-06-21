@@ -7,7 +7,7 @@ and surfaces every call on an operational dashboard.
 
 ```
 happyrobot-carrier-sales/
-├── README.md                 <- you are here
+├── README.md                 
 ├── GIT_SETUP.md
 ├── middleware/                 AWS Lambda + API Gateway (SAM)
 │   ├── README.md              detailed backend docs (architecture, design decisions)
