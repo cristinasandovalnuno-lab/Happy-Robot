@@ -151,13 +151,23 @@ Open `http://localhost:8080`. See `dashboard/README.md` for details.
   attempts to extract the rate ceiling or bypass OTP verification,
   for ops review.
 
-## Still to do
 
-- **OTP flow**: designed (Twin `carrier_roster` lookup + SMS send +
-  code confirmation) but not testable end-to-end — this account lacks
-  the SMS-sending credentials HappyRobot's native SMS node requires.
-- **Final 5 deliverables**: summary email, build description doc,
-  confirmed GitHub push, HappyRobot workflow link, demo video.
+## Next steps
 
-See the message accompanying this repo for the full pending-tests
-checklist, challenge-PDF gap analysis, and retrospective notes.
+- **Live transfer to a senior representative.** The handoff after a
+  successful booking is currently simulated by the agent verbally —
+  next step is wiring this to an actual live transfer, replacing the
+  simulated handoff entirely.
+- **Populate `carrier_roster` with real phone numbers at scale.**
+  FMCSA's QCMobile API (used for authority verification) does not
+  return a phone number field — confirmed by inspecting every field in
+  its response and reviewing all 9 documented QCMobile endpoints, none
+  of which expose carrier contact information. The OTP step therefore
+  depends on the brokerage's own carrier roster as the source of
+  truth for registered phone numbers (the brokerage already manages a
+  network of known carriers, per the engagement brief). Before
+  production rollout, this table needs to be populated from the
+  brokerage's real carrier database — likely a bulk import keyed by
+  MC number — rather than the handful of test entries currently
+  seeded for this proof of concept.
+
