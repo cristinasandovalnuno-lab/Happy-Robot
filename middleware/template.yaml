@@ -1,0 +1,190 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  HappyRobot Logistics - middleware de Carrier Sales.
+  Expone el Legacy TMS (protocolo TCP crudo) y la verificación FMCSA
+  como una API REST que la plataforma HappyRobot puede invocar como tool.
+
+Parameters:
+  TmsHost:
+    Type: String
+    Description: Hostname del Legacy TMS
+  TmsPort:
+    Type: Number
+    Description: Puerto del Legacy TMS
+    Default: 17159
+  TmsAuthToken:
+    Type: String
+    Description: Token de auth del TMS (por operador)
+    NoEcho: true
+  FmcsaApiKey:
+    Type: String
+    Description: webKey de la QCMobile API de FMCSA
+    NoEcho: true
+  FmcsaMode:
+    Type: String
+    Description: "'live' usa la API real de FMCSA (confirmado funcionando desde AWS), 'mock' usa datos simulados como fallback de contingencia"
+    Default: live
+    AllowedValues: [live, mock]
+  TwinGatewayUrl:
+    Type: String
+    Description: URL del gateway REST de Twin (Settings -> Twin Database en HappyRobot)
+  TwinOrgId:
+    Type: String
+    Description: Org ID de HappyRobot, formato UUID (no el slug legible) - usado como header x-org-id contra el gateway de Twin
+  HrPlatformUrl:
+    Type: String
+    Description: Base URL de la plataforma HappyRobot, usada para mintear el JWT corto de servicio contra Twin
+    Default: https://platform.happyrobot.ai
+  HrAppServiceKey:
+    Type: String
+    NoEcho: true
+    Description: Twin Access Key (HR_APP_SERVICE_KEY) de la App, sacada de Apps -> tu App -> Twin Access. Se usa solo para mintear el JWT corto, nunca se manda directo al gateway de Twin.
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 20
+    MemorySize: 256
+    CodeUri: src/
+    Environment:
+      Variables:
+        TMS_HOST: !Ref TmsHost
+        TMS_PORT: !Ref TmsPort
+        TMS_AUTH_TOKEN: !Ref TmsAuthToken
+        FMCSA_API_KEY: !Ref FmcsaApiKey
+        FMCSA_MODE: !Ref FmcsaMode
+
+Resources:
+  CarrierSalesApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: "'GET,POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,x-api-key'"
+        AllowOrigin: "'*'"
+
+  VerifyCarrierFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: verify_carrier.app.handler
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref CarrierSalesApi
+            Path: /carrier/verify
+            Method: post
+            Auth:
+              ApiKeyRequired: true
+
+  SearchLoadsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: search_loads.app.handler
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref CarrierSalesApi
+            Path: /loads/search
+            Method: post
+            Auth:
+              ApiKeyRequired: true
+
+  GetLoadFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: get_load.app.handler
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref CarrierSalesApi
+            Path: /loads/{load_id}
+            Method: get
+            Auth:
+              ApiKeyRequired: true
+
+  BookLoadFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: book_load.app.handler
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref CarrierSalesApi
+            Path: /loads/{load_id}/book
+            Method: post
+            Auth:
+              ApiKeyRequired: true
+
+  NegotiateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: negotiate.app.handler
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref CarrierSalesApi
+            Path: /negotiate
+            Method: post
+            Auth:
+              ApiKeyRequired: true
+
+  MetricsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: metrics.app.handler
+      Environment:
+        Variables:
+          TWIN_GATEWAY_URL: !Ref TwinGatewayUrl
+          TWIN_ORG_ID: !Ref TwinOrgId
+          HR_PLATFORM_URL: !Ref HrPlatformUrl
+          HR_APP_SERVICE_KEY: !Ref HrAppServiceKey
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            RestApiId: !Ref CarrierSalesApi
+            Path: /metrics
+            Method: get
+            Auth:
+              ApiKeyRequired: true
+
+  # API key + usage plan para que HappyRobot llame con header x-api-key.
+  # NOTA: el logical id del stage que genera SAM sigue el patrón
+  # "<ApiLogicalId><StageName>Stage". Si el deploy falla por el DependsOn,
+  # revisa el nombre exacto en `sam deploy` -> CloudFormation events.
+  HappyRobotApiKey:
+    Type: AWS::ApiGateway::ApiKey
+    DependsOn: CarrierSalesApiprodStage
+    Properties:
+      Name: happyrobot-carrier-sales-key
+      Enabled: true
+
+  HappyRobotUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    DependsOn: CarrierSalesApiprodStage
+    Properties:
+      ApiStages:
+        - ApiId: !Ref CarrierSalesApi
+          Stage: prod
+
+  HappyRobotUsagePlanKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !Ref HappyRobotApiKey
+      KeyType: API_KEY
+      UsagePlanId: !Ref HappyRobotUsagePlan
+
+Outputs:
+  ApiUrl:
+    Description: Base URL que debe configurarse en el tool/webhook de HappyRobot
+    Value: !Sub "https://${CarrierSalesApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
+  ApiKeyId:
+    Description: Logical id de la API key (usa `aws apigateway get-api-key --api-key <id> --include-value` para ver el valor)
+    Value: !Ref HappyRobotApiKey

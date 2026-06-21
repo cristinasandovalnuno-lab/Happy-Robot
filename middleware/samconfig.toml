@@ -1,0 +1,13 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "happyrobot-carrier-sales"
+resolve_s3 = true
+s3_prefix = "happyrobot-carrier-sales"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "TmsHost=\"tramway.proxy.rlwy.net\" TmsPort=\"17159\" FmcsaMode=\"live\" TwinGatewayUrl=\"https://twin-use2-03.platform.happyrobot.ai\" TwinOrgId=\"019ebde0-e34b-79f0-ac3d-82eca76d51d9\" HrPlatformUrl=\"https://platform.happyrobot.ai\""
+image_repositories = []
+disable_rollback = true
+
+[default.global.parameters]
+region = "us-east-1"

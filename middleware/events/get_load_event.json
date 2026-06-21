@@ -1,0 +1,7 @@
+{
+  "httpMethod": "GET",
+  "path": "/loads/LD0000045821",
+  "headers": {},
+  "pathParameters": {"load_id": "LD0000045821"},
+  "body": null
+}

@@ -1,0 +1,7 @@
+{
+  "httpMethod": "POST",
+  "path": "/carrier/verify",
+  "headers": {"Content-Type": "application/json"},
+  "pathParameters": null,
+  "body": "{\"mc_number\": \"872144\"}"
+}

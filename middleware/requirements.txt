@@ -1,0 +1,6 @@
+# Sin dependencias externas que haya que empaquetar: el código de las
+# Lambdas usa solo la librería estándar (socket, json, urllib), salvo
+# log_call/app.py que usa boto3 - viene preinstalado en el runtime de
+# Lambda (public.ecr.aws/lambda/python:3.12), así que no hace falta
+# listarlo aquí. Si corres log_call/app.py fuera de Lambda/sam local
+# (p.ej. en un script standalone), necesitas `pip install boto3` aparte.

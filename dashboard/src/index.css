@@ -1,0 +1,481 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.02'/%3E%3C/svg%3E");
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: #f8f9fb;
+  color: #1f2937;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: var(--bg-noise);
+  background-repeat: repeat;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.25;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5de;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3b4;
+}
+
+/* Recharts overrides */
+.recharts-text {
+  font-family: 'IBM Plex Mono', monospace !important;
+  font-size: 11px !important;
+  fill: #6b7280 !important;
+}
+
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: #e5e8ee !important;
+}
+
+/* ── Layout ── */
+
+.page {
+  @apply min-h-screen bg-surface-100;
+}
+
+.page-center {
+  @apply min-h-screen flex items-center justify-center bg-surface-100;
+}
+
+.page-header {
+  @apply bg-white border-b border-surface-300 sticky top-0 z-50;
+}
+
+.page-container {
+  @apply max-w-[1440px] mx-auto px-6 lg:px-10;
+}
+
+.page-main {
+  @apply max-w-[1440px] mx-auto px-6 lg:px-10 py-8;
+}
+
+.grid-2col {
+  @apply grid grid-cols-1 lg:grid-cols-2 gap-6;
+}
+
+/* ── Header ── */
+
+.header-row {
+  @apply flex items-center justify-between h-16;
+}
+
+.header-brand {
+  @apply flex items-center gap-3;
+}
+
+.header-logo {
+  @apply w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center;
+}
+
+.header-title {
+  @apply font-display font-bold text-surface-900 text-[15px] tracking-tight leading-none;
+}
+
+.header-subtitle {
+  @apply text-[11px] font-mono text-surface-500 tracking-wide uppercase mt-0.5;
+}
+
+.header-actions {
+  @apply flex items-center gap-4;
+}
+
+.badge-live {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-medium font-mono;
+}
+
+.badge-live-dot {
+  @apply w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse;
+}
+
+.header-date {
+  @apply text-xs text-surface-500 font-mono;
+}
+
+/* ── Tabs ── */
+
+.tab-bar {
+  @apply flex gap-1 -mb-px;
+}
+
+.tab-btn {
+  @apply px-4 py-2.5 text-sm font-medium font-display transition-colors relative;
+}
+
+.tab-btn--active {
+  @apply text-brand-600;
+}
+
+.tab-btn--inactive {
+  @apply text-surface-500 hover:text-surface-700;
+}
+
+.tab-indicator {
+  @apply absolute bottom-0 left-0 right-0 h-0.5 bg-brand-600 rounded-full;
+}
+
+/* ── Loading ── */
+
+.spinner {
+  @apply w-8 h-8 border-2 border-surface-300 border-t-brand-600 rounded-full;
+}
+
+.error-text {
+  @apply text-surface-600 font-display;
+}
+
+/* ── Card ── */
+
+.card {
+  @apply bg-white rounded-2xl border border-surface-200 shadow-card hover:shadow-card-hover transition-shadow duration-300;
+}
+
+.card-header {
+  @apply px-6 pt-5 pb-1;
+}
+
+.card-title {
+  @apply font-display font-semibold text-surface-900 text-[15px];
+}
+
+.card-subtitle {
+  @apply text-xs text-surface-500 mt-0.5;
+}
+
+.card-body-chart {
+  @apply px-4 pb-4 pt-2;
+}
+
+/* ── KPI Cards ── */
+
+.kpi-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+}
+
+.kpi-card {
+  @apply bg-white rounded-2xl border border-surface-200 shadow-card hover:shadow-card-hover transition-all duration-300 p-5;
+}
+
+.kpi-content {
+  @apply flex items-start justify-between;
+}
+
+.kpi-text {
+  @apply space-y-3;
+}
+
+.kpi-label {
+  @apply text-xs font-medium text-surface-500 uppercase tracking-wider font-mono;
+}
+
+.kpi-value {
+  @apply text-3xl font-display font-bold text-surface-900 tracking-tight;
+}
+
+.kpi-sub {
+  @apply text-[11px] text-surface-400 font-mono mt-1;
+}
+
+.kpi-icon {
+  @apply w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300;
+}
+
+/* ── Tooltips (chart) ── */
+
+.chart-tooltip {
+  @apply bg-white rounded-xl border border-surface-200 shadow-lg px-4 py-3;
+}
+
+.chart-tooltip-label {
+  @apply text-[11px] font-mono text-surface-500 mb-2;
+}
+
+.chart-tooltip-row {
+  @apply flex items-center justify-between gap-4;
+}
+
+.chart-tooltip-dot {
+  @apply w-2 h-2 rounded-full;
+}
+
+.chart-tooltip-name {
+  @apply text-xs text-surface-600;
+}
+
+.chart-tooltip-val {
+  @apply text-xs font-mono font-medium text-surface-900;
+}
+
+.chart-tooltip-divider {
+  @apply border-t border-surface-200 mt-1 pt-1 text-right;
+}
+
+.chart-tooltip-total {
+  @apply text-xs font-mono text-surface-400;
+}
+
+/* ── Legend ── */
+
+.legend-label {
+  @apply text-[11px] font-mono text-surface-600;
+}
+
+/* ── Funnel ── */
+
+.funnel-body {
+  @apply px-6 pb-5 pt-3 space-y-3;
+}
+
+.funnel-conversion {
+  @apply flex items-center gap-2 ml-2 mb-1;
+}
+
+.funnel-conversion-text {
+  @apply text-[10px] font-mono text-surface-400;
+}
+
+.funnel-row {
+  @apply flex items-center gap-4;
+}
+
+.funnel-label {
+  @apply w-20 shrink-0;
+}
+
+.funnel-label-text {
+  @apply text-xs font-medium text-surface-700 font-display;
+}
+
+.funnel-bar-bg {
+  @apply flex-1 h-9 rounded-lg overflow-hidden relative;
+}
+
+.funnel-bar-fill {
+  @apply h-full rounded-lg;
+}
+
+.funnel-count {
+  @apply w-16 shrink-0 text-right;
+}
+
+.funnel-count-text {
+  @apply text-lg font-display font-bold;
+}
+
+/* ── Scatter tooltip ── */
+
+.scatter-tooltip {
+  @apply bg-white rounded-xl border border-surface-200 shadow-lg px-4 py-3 space-y-1;
+}
+
+.scatter-tooltip-row {
+  @apply flex items-center justify-between gap-4;
+}
+
+.scatter-tooltip-label {
+  @apply text-[11px] font-mono text-surface-500;
+}
+
+.scatter-tooltip-val {
+  @apply text-sm font-display font-semibold text-surface-900;
+}
+
+.scatter-tooltip-val--green {
+  @apply text-sm font-display font-semibold text-emerald-600;
+}
+
+.scatter-tooltip-saved {
+  @apply text-xs font-mono font-medium text-emerald-600;
+}
+
+.scatter-tooltip-divider {
+  @apply border-t border-surface-200 pt-1 flex items-center justify-between gap-4;
+}
+
+/* ── Outcome chart ── */
+
+.outcome-body {
+  @apply flex items-center gap-4 px-6 pb-5 pt-2;
+}
+
+.outcome-pie-wrap {
+  @apply w-48 h-48 flex-shrink-0;
+}
+
+.outcome-legend {
+  @apply flex-1 space-y-2.5;
+}
+
+.outcome-legend-row {
+  @apply flex items-center justify-between;
+}
+
+.outcome-legend-left {
+  @apply flex items-center gap-2.5;
+}
+
+.outcome-dot {
+  @apply w-2.5 h-2.5 rounded-full;
+}
+
+.outcome-label {
+  @apply text-sm text-surface-700;
+}
+
+.outcome-legend-right {
+  @apply flex items-center gap-3;
+}
+
+.outcome-count {
+  @apply text-sm font-mono font-medium text-surface-900;
+}
+
+.outcome-pct {
+  @apply text-[11px] font-mono text-surface-400 w-10 text-right;
+}
+
+/* ── Loads utilization ── */
+
+.utilization-body {
+  @apply px-6 py-5;
+}
+
+.utilization-header {
+  @apply flex items-center justify-between mb-3;
+}
+
+.utilization-legend {
+  @apply flex items-center gap-4;
+}
+
+.utilization-legend-item {
+  @apply flex items-center gap-1.5;
+}
+
+.utilization-dot--booked {
+  @apply w-2.5 h-2.5 rounded-full bg-brand-600;
+}
+
+.utilization-dot--available {
+  @apply w-2.5 h-2.5 rounded-full bg-surface-200;
+}
+
+.utilization-legend-text {
+  @apply text-xs font-mono text-surface-600;
+}
+
+.utilization-bar-bg {
+  @apply h-4 bg-surface-200 rounded-full overflow-hidden;
+}
+
+.utilization-bar-fill {
+  @apply h-full bg-brand-600 rounded-full;
+}
+
+.utilization-footer {
+  @apply flex items-center justify-between mt-2;
+}
+
+.utilization-bound {
+  @apply text-[11px] font-mono text-surface-400;
+}
+
+.utilization-pct {
+  @apply text-sm font-display font-bold text-brand-600;
+}
+
+/* ── Table ── */
+
+.table {
+  @apply w-full text-left;
+}
+
+.table-head-row {
+  @apply border-b border-surface-200;
+}
+
+.table-th {
+  @apply text-[10px] font-mono font-medium text-surface-500 uppercase tracking-wider py-2.5 pr-4;
+}
+
+.table-th--right {
+  @apply text-[10px] font-mono font-medium text-surface-500 uppercase tracking-wider py-2.5 text-right;
+}
+
+.table-th--right-last {
+  @apply text-[10px] font-mono font-medium text-surface-500 uppercase tracking-wider py-2.5 pr-0 text-right;
+}
+
+.table-row {
+  @apply border-b border-surface-100 last:border-0 hover:bg-surface-100/50 transition-colors;
+}
+
+.table-cell {
+  @apply py-2.5 pr-4;
+}
+
+.table-cell--right {
+  @apply py-2.5 pr-4 text-right;
+}
+
+.table-cell--right-last {
+  @apply py-2.5 text-right;
+}
+
+.table-date {
+  @apply text-xs font-medium text-surface-800;
+}
+
+.table-time {
+  @apply text-[10px] text-surface-400 font-mono;
+}
+
+.table-load-id {
+  @apply text-xs font-mono font-medium text-brand-600;
+}
+
+.table-carrier {
+  @apply text-xs text-surface-700;
+}
+
+.table-lane {
+  @apply text-xs text-surface-600;
+}
+
+.table-price {
+  @apply text-xs font-mono font-medium text-surface-900;
+}
+
+.table-rounds {
+  @apply inline-flex items-center justify-center w-5 h-5 rounded-full bg-surface-100 text-[10px] font-mono font-medium text-surface-600;
+}
+
+/* ── Map ── */
+
+.map-body {
+  @apply px-0 pb-0;
+}

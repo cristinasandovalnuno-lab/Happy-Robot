@@ -1,0 +1,7 @@
+{
+  "httpMethod": "POST",
+  "path": "/loads/LD0000045821/book",
+  "headers": {"Content-Type": "application/json"},
+  "pathParameters": {"load_id": "LD0000045821"},
+  "body": "{\"mc_number\": \"872144\", \"agreed_rate\": 2200}"
+}

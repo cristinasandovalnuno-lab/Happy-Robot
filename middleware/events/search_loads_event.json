@@ -1,0 +1,7 @@
+{
+  "httpMethod": "POST",
+  "path": "/loads/search",
+  "headers": {"Content-Type": "application/json"},
+  "pathParameters": null,
+  "body": "{\"origin_state\": \"GA\", \"destination_state\": \"TX\", \"equipment_type\": \"DRY_VAN\", \"max_results\": 5}"
+}

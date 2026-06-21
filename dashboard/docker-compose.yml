@@ -1,0 +1,9 @@
+services:
+  carrier-sales-dashboard:
+    build:
+      context: .
+      args:
+        - VITE_API_URL=${VITE_API_URL}
+        - VITE_API_KEY=${VITE_API_KEY}
+    ports:
+      - "8080:80"

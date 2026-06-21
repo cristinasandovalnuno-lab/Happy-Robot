@@ -1,0 +1,7 @@
+{
+  "httpMethod": "POST",
+  "path": "/negotiate",
+  "headers": {"Content-Type": "application/json"},
+  "pathParameters": null,
+  "body": "{\"load_id\": \"LD0000045821\", \"carrier_offer\": 2300, \"round\": 1}"
+}
