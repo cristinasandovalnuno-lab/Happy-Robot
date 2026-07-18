@@ -1,17 +1,16 @@
-# HappyRobot Logistics — Inbound Carrier Sales
+# Inbound Carrier Sales
 
-End-to-end build for the HappyRobot FDE challenge: an inbound voice
-agent that verifies a carrier's FMCSA authority, searches and books
-loads against a legacy TMS, negotiates rate within a hidden ceiling,
-and surfaces every call on an operational dashboard.
+An inbound voice agent that verifies a carrier's FMCSA authority, 
+searches and books loads against a legacy TMS, negotiates rate 
+within a hidden ceiling, and surfaces every call on an operational dashboard.
 
 ```
-happyrobot-carrier-sales/
+carrier-sales/
 ├── README.md                 
 ├── GIT_SETUP.md
 ├── middleware/                 AWS Lambda + API Gateway (SAM)
-│   ├── README.md              detailed backend docs (architecture, design decisions)
-│   ├── TESTING.md             4-layer test guide, no HappyRobot agent needed
+│   ├── README.md               detailed backend docs (architecture, design decisions)
+│   ├── TESTING.md              4-layer test guide
 │   ├── template.yaml           SAM template: API Gateway + Lambdas, no external database
 │   ├── src/
 │   │   ├── common/             TMS wire protocol codec/client, FMCSA client (+ mock), negotiation logic, config, HTTP helpers
@@ -55,7 +54,7 @@ happyrobot-carrier-sales/
 
 ## Data layer and operational UI
 
-Call activity is captured using HappyRobot's native **Twin** database
+Call activity is captured using **a per-org Postgres instance with a REST gateway** database
 (a per-org Postgres instance with a REST gateway) — there is no
 DynamoDB or other external database anywhere in this project:
 
@@ -64,9 +63,9 @@ DynamoDB or other external database anywhere in this project:
   written to Twin's `calls_log` table via a native "Write to Twin"
   workflow node, immediately after the call's `Extract` step — no
   custom Lambda involved in writing this data.
-- A `carrier_roster` table (also in Twin) maps `mc_number` to
-  `registered_phone_number`, intended to be read via a native "Read
-  from Twin" node for the OTP step (see "Still to do" below — the OTP
+- A `carrier_roster` table (also in a per-org Postgres instance with a REST gateway)
+  maps `mc_number` to `registered_phone_number`, intended to be read via a
+  native "Read from per-org Postgres" node for the OTP step (see "Still to do" below — the OTP
   flow itself could not be fully tested end-to-end in this engagement
   due to missing SMS-sending credentials).
 
@@ -104,8 +103,7 @@ sam deploy --guided
 
 You'll be prompted for 7 parameters: `TmsHost`, `TmsPort`,
 `TmsAuthToken`, `FmcsaApiKey`, `FmcsaMode` (`live` or `mock`),
-`TwinGatewayUrl`, and `TwinOrgId` (the last two from Settings → Twin
-Database in the HappyRobot platform). All secrets use CloudFormation
+`TwinGatewayUrl`, and `TwinOrgId`. All secrets use CloudFormation
 `NoEcho`, never hardcoded in source.
 
 On success, `sam deploy` prints the `ApiUrl` and `ApiKeyId` outputs.
